@@ -8,7 +8,7 @@ A set of sample images is available for testing in the resource folder.
 <br>
 Running the program generates new ordered images in the resources / result folder.  
 </p>
-Below 2 photos show a set of images of people, cars, rooms and fish. After using the algorithm to process the images, the groups became more visible.
+Below 2 photos show a set of images of people, cars, rooms and fish. After using the algorithm to process the images, the groups became more visible and sorteds by complexity level.
 <h3>Image set before process</h3>
 <img src="before.png" width="60%">
 <h3>Image set after process</h3>
