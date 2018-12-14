@@ -41,7 +41,7 @@ public class ImageDistanceComparator {
 		int count = 0;
 		int sucessCount = 0;
 		for (File aux : dir.listFiles()) {
-			if (aux.getName().contains(".jpg") || aux.getName().contains(".png")) {
+			if (aux.getName().contains(".jpg") || aux.getName().contains(".png") || aux.getName().contains(".jpeg")) {
 				try {
 					double score = score(aux);
 					System.out.println("Score:" + aux.getName() + "=>" + (score));
