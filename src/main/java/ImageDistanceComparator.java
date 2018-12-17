@@ -25,9 +25,10 @@ import org.bytedeco.javacpp.opencv_imgcodecs;
 public class ImageDistanceComparator {
 
 	static File dir = new File("resources");
-	static File resDir = new File(dir, "result");
-	static final double SQUARE_FACTOR = 4;
-	static final double CIRCLE_FACTOR = Math.PI;
+	static File resDir = new File("resources/result");
+	static final double SQUARE_WEIGTH = 100;
+	static final double CIRCLE_WEIGTH = 10;
+	static final double LINE_WEIGTH = 1;
 
 	public static void main(String[] args) throws Exception {
 		
@@ -45,7 +46,7 @@ public class ImageDistanceComparator {
 				try {
 					double score = score(aux);
 					System.out.println("Score:" + aux.getName() + "=>" + (score));
-					File out2 = new File(resDir, "" + score + "_" + aux.getName() + ".png");
+					File out2 = new File(resDir, "" + score + "_" + System.currentTimeMillis() + ".png");
 					org.bytedeco.javacpp.opencv_imgcodecs.imwrite(out2.getAbsolutePath(),
 							imread(aux.getAbsolutePath(), opencv_imgcodecs.CV_LOAD_IMAGE_GRAYSCALE));
 
@@ -75,7 +76,7 @@ public class ImageDistanceComparator {
 				500 // max radius
 		);
 
-		double countCircle = circles.total() * CIRCLE_FACTOR;
+		double countCircle = circles.total() * CIRCLE_WEIGTH;
 		double countSquare = 0.0;
 
 		CvSeq contours = new CvSeq();
@@ -85,24 +86,24 @@ public class ImageDistanceComparator {
 		if (contours != null && !contours.isNull()) {
 			CvSeq result = cvApproxPoly(contours, Loader.sizeof(CvContour.class), mem, CV_POLY_APPROX_DP,
 					cvContourPerimeter(contours) * 0.02, 0);
-			countSquare = (result.total() * SQUARE_FACTOR);
+			countSquare = (result.total() * SQUARE_WEIGTH);
 		}
-
-		double featureCount = countSquare + countCircle;
-		System.out.println("Total features " + featureCount);
 
 		CvSeq lines = new CvSeq();
 		mem = CvMemStorage.create();
 		lines = cvHoughLines2(img1, mem, CV_HOUGH_STANDARD, 1, Math.PI / 180, 40, 1, 0, 0, CV_PI);
 
-		double lineCount = lines.total();
+		double lineCount = lines.total() * LINE_WEIGTH;
 		System.out.println("lines " + lineCount);
 
 		lines.close();
 		circles.close();
+		
+		double c1 = Math.hypot(lineCount, countCircle);
+		double c2 = Math.hypot(lineCount, countSquare);
+		
+		double module =  Math.hypot(c1, c2);
 
-		double vector =  Math.sqrt((featureCount)*(featureCount) + (lineCount)*(lineCount));
-
-		return vector;
+		return module * (c1 > c2 ? 1 : -1);
 	}
 }
