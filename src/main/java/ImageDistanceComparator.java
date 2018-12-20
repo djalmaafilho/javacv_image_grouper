@@ -24,11 +24,36 @@ import org.bytedeco.javacpp.opencv_imgcodecs;
  */
 public class ImageDistanceComparator {
 
+	static class Complex{
+		public double real, img;
+		
+		public Complex(double real, double img) {
+			this.real = real;
+			this.img = img;
+		}
+		
+		public double getModule() {
+			return Math.hypot(real, img);
+		}
+		public double getAngle() {
+			return Math.atan2(real,img);			
+		}
+		
+		 public Complex plus(Complex b) {
+		        Complex a = this;
+		        double real = a.real + b.real;
+		        double imag = a.img + b.img;
+		        return new Complex(real, imag);
+		 }
+	}
+	
 	static File dir = new File("resources");
 	static File resDir = new File("resources/result");
 	static final double SQUARE_WEIGTH = 100;
 	static final double CIRCLE_WEIGTH = 10;
 	static final double LINE_WEIGTH = 1;
+	
+	
 
 	public static void main(String[] args) throws Exception {
 		
@@ -44,9 +69,13 @@ public class ImageDistanceComparator {
 		for (File aux : dir.listFiles()) {
 			if (aux.getName().contains(".jpg") || aux.getName().contains(".png") || aux.getName().contains(".jpeg")) {
 				try {
-					double score = score(aux);
-					System.out.println("Score:" + aux.getName() + "=>" + (score));
-					File out2 = new File(resDir, "" + score + "_" + System.currentTimeMillis() + ".png");
+					
+					Complex score = score(aux);
+					//two fraction digits
+					String strScore = (Math.round(score.getModule() * 100))+"_"+score.getAngle();
+					
+					System.out.println("Score:" + aux.getName() + "=>" + (strScore));
+					File out2 = new File(resDir, "" + strScore + "_" + System.currentTimeMillis() + ".png");
 					org.bytedeco.javacpp.opencv_imgcodecs.imwrite(out2.getAbsolutePath(),
 							imread(aux.getAbsolutePath(), opencv_imgcodecs.CV_LOAD_IMAGE_GRAYSCALE));
 
@@ -60,7 +89,7 @@ public class ImageDistanceComparator {
 		System.out.println("Hits " + sucessCount + " From " + count);
 	}
 	
-	public static double score(File path) {
+	public static Complex score(File path) {
 		Mat Image1 = imread(path.getAbsolutePath(), opencv_imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
 		IplImage img1 = new IplImage(Image1);
 
@@ -70,13 +99,13 @@ public class ImageDistanceComparator {
 				CV_HOUGH_GRADIENT, // Detection method
 				1, // Inverse ratio
 				100, // Minimum distance between the centers of the detected circles
-				100, // Higher threshold for canny edge detector
-				100, // Threshold at the center detection stage
+				10, // Higher threshold for canny edge detector
+				10, // Threshold at the center detection stage
 				15, // min radius
 				500 // max radius
 		);
 
-		double countCircle = circles.total() * CIRCLE_WEIGTH;
+		double countCircle = circles.total();
 		double countSquare = 0.0;
 
 		CvSeq contours = new CvSeq();
@@ -86,24 +115,19 @@ public class ImageDistanceComparator {
 		if (contours != null && !contours.isNull()) {
 			CvSeq result = cvApproxPoly(contours, Loader.sizeof(CvContour.class), mem, CV_POLY_APPROX_DP,
 					cvContourPerimeter(contours) * 0.02, 0);
-			countSquare = (result.total() * SQUARE_WEIGTH);
+			countSquare = result.total();
 		}
 
 		CvSeq lines = new CvSeq();
 		mem = CvMemStorage.create();
 		lines = cvHoughLines2(img1, mem, CV_HOUGH_STANDARD, 1, Math.PI / 180, 40, 1, 0, 0, CV_PI);
-
-		double lineCount = lines.total() * LINE_WEIGTH;
-		System.out.println("lines " + lineCount);
+		double lineCount = lines.total();
 
 		lines.close();
 		circles.close();
 		
-		double c1 = Math.hypot(lineCount, countCircle);
-		double c2 = Math.hypot(lineCount, countSquare);
-		
-		double module =  Math.hypot(c1, c2);
-
-		return module * (c1 > c2 ? 1 : -1);
+		Complex a = new Complex(lineCount * LINE_WEIGTH, countCircle * CIRCLE_WEIGTH);			
+		Complex b = new Complex(lineCount * LINE_WEIGTH, countSquare * SQUARE_WEIGTH);
+		return a.plus(b);
 	}
 }
