@@ -86,9 +86,9 @@ public class ImageDistanceComparator {
 	static final double SQUARE_WEIGTH = 1;
 	static final double CIRCLE_WEIGTH = 1;
 	static final double LINE_WEIGTH = 1;
-	static final boolean saveCannyImage = true;
+	static final boolean saveCannyImage = false;
 	static final boolean saveGrayImage = true;
-	static final boolean saveWithLinesImage = true;
+	static final boolean saveWithLinesImage = false;
 	
 	
 
